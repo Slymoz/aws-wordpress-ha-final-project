@@ -10,10 +10,9 @@ DB_PASSWORD="${db_password}"
 DB_HOST="${db_host}"
 DB_PORT="${db_port}"
 
-# Mise à jour et package système
+# Mise à jour et package système (écrit à la suite de façon simple)
 dnf upgrade -y
-LAMP_PACKAGES=(wget httpd php-fpm php-mysqli php-json php php-devel gzip openssl tar mariadb105)
-dnf install -y "${LAMP_PACKAGES[@]}"
+dnf install -y wget httpd php-fpm php-mysqli php-json php php-devel gzip openssl tar mariadb105
 
 # Activation des daemons Web et PHP
 systemctl start httpd
@@ -29,11 +28,11 @@ find /var/www -type f -exec chmod 0664 {} \;
 
 # Boucle active d'attente de disponibilité du service managé RDS (Max 10 minutes)
 for attempt in $(seq 1 60); do
-  if mysql -h "${DB_HOST}" -P "${DB_PORT}" -u "${DB_USER}" -p"${DB_PASSWORD}" "${DB_NAME}" -e "SELECT 1;" >/dev/null 2>&1; then
+  if mysql -h "$${DB_HOST}" -P "$${DB_PORT}" -u "$${DB_USER}" -p"$${DB_PASSWORD}" "$${DB_NAME}" -e "SELECT 1;" >/dev/null 2>&1; then
     echo "RDS database engine connection verified successfully."
     break
   fi
-  echo "Waiting for RDS instance availability... Attempt ${attempt}/60"
+  echo "Waiting for RDS instance availability... Attempt $${attempt}/60"
   sleep 10
 done
 
@@ -48,16 +47,16 @@ cp /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
 replace_placeholder() {
   sed -i "s|$1|$2|g" /var/www/html/wp-config.php
 }
-replace_placeholder "database_name_here" "${DB_NAME}"
-replace_placeholder "username_here" "${DB_USER}"
-replace_placeholder "password_here" "${DB_PASSWORD}"
-replace_placeholder "localhost" "${DB_HOST}:${DB_PORT}"
+replace_placeholder "database_name_here" "$${DB_NAME}"
+replace_placeholder "username_here" "$${DB_USER}"
+replace_placeholder "password_here" "$${DB_PASSWORD}"
+replace_placeholder "localhost" "$${DB_HOST}:$${DB_PORT}"
 
 # Injection de la structure HTML d'atterrissage pour le Health Check de l'ALB
 cat > /var/www/html/index.html <<EOF
 <h1>WordPress HA Cluster Node</h1>
 <p>Status: Operating Healthy</p>
-<p>Database Destination Host: ${DB_HOST}</p>
+<p>Database Destination Host: $${DB_HOST}</p>
 EOF
 
 # Configuration finale des surcharges Apache et redémarrage des services
