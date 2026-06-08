@@ -38,3 +38,46 @@ An internet-facing **Application Load Balancer (ALB)** acts as the unique entry 
 Terraform CLI: Installed and canonized (>= 1.5.0).
 AWS CLI v2: Connected to active AWS Academy temporary shell sessions.
 AWS Temporary Tokens: Loaded into active environment buffers (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_SESSION_TOKEN).
+
+### 5. Deployment & Quickstart Guide
+
+To stand up the infrastructure and verify its high-availability configuration, execute the following block:
+
+```bash
+# 1. Load your AWS Academy Temporary Sessions
+export AWS_ACCESS_KEY_ID="your-access-key-id"
+export AWS_SECRET_ACCESS_KEY="your-secret-access-key"
+export AWS_SESSION_TOKEN="your-session-token"
+
+# 2. Set the private RDS master password passphrase
+export TF_VAR_db_master_password="YourSecurePassword2026!"
+
+# 3. Provision the Cloud Stack
+terraform init
+terraform plan -out plan.out
+terraform apply plan.out
+```
+
+### 6. Verification and E2E Application Testing
+Once the deployment concludes (approx. 4-5 minutes), run the automated curl payload test against the Application Load Balancer endpoint to verify the operational state of the stateless compute pool and its secure connection to the backend RDS database cluster:
+
+```bash
+# Capture the dynamic entrypoint and query the cluster
+ALB_DNS=$(terraform output -raw wordpress_alb_url)
+curl -s "${ALB_DNS}"
+```
+
+Expected Healthy Response:
+
+```bash
+<h1>WordPress HA Cluster Node</h1>
+<p>Status: Operating Healthy</p>
+<p>Database Destination Host: wp-ha-final-db-cluster...rds.amazonaws.com</p>
+```
+
+7. Teardown & Resource Decommissioning
+To avoid running up maintenance fees or burning academic cloud credits, purge all tracking footprints directly using:
+
+```bash
+terraform destroy -auto-approve
+```
